@@ -16,7 +16,6 @@ router.get("/", auth, async (req, res) => {
 // Add company
 router.post("/", auth, async (req, res) => {
   try {
-    console.log(req.body);
     const company = new Company(req.body);
     await company.save();
     res.status(201).json(company);
@@ -29,14 +28,17 @@ router.post("/", auth, async (req, res) => {
 router.put("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const company = await Company.findByIdAndUpdate(id, req.body, {
+    const updatecopy = { ...req.body };
+    delete updatecopy._id;
+    const company = await Company.findByIdAndUpdate(id.toString(), updatecopy, {
       new: true,
     });
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
     }
-    res.json(company);
+    return res.status(200).json(company);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -45,16 +47,13 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:email", auth, async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Deleting : ", id);
     const company = await Company.findByIdAndDelete(id);
-    console.log(company);
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
     }
-    console.log("Deleted");
     res.json({ message: "Company deleted" });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

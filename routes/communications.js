@@ -3,6 +3,7 @@ const router = express.Router();
 const Communication = require("../models/Communication");
 const Company = require("../models/Company");
 const auth = require("../middleware/auth");
+const mongoose = require("mongoose");
 
 // Get all Communication
 router.get("/", auth, async (req, res) => {
@@ -10,8 +11,7 @@ router.get("/", auth, async (req, res) => {
     const { companyID } = req.query;
     const communication = await Communication.find({
       company: companyID.toString(),
-    })
-    console.log("Communications : ", communication);
+    });
     res.status(200).json(communication);
   } catch (err) {
     console.error("Error in geting communications : ", err);
@@ -22,7 +22,6 @@ router.get("/", auth, async (req, res) => {
 router.get("/all", auth, async (req, res) => {
   try {
     const communication = await Communication.find().populate("company");
-    console.log("Communications : ", communication);
     res.status(200).json(communication);
   } catch (err) {
     console.error("Error in geting communications : ", err);
@@ -33,32 +32,42 @@ router.get("/all", auth, async (req, res) => {
 // Add Communication
 router.post("/", auth, async (req, res) => {
   try {
-    console.log(req.body);
     const communication = new Communication(req.body);
     await communication.save();
     res.status(201).json(communication);
   } catch (err) {
-    console.error("Error : ", err);
+    console.error("Error in makeing new communication : ", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // Update Communication
-router.put("/", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
+  const { id } = req.params;
+  const updatecopy = { ...req.body };
+  delete updatecopy._id;
+  delete updatecopy.performedBy;
+  delete updatecopy.createdAt;
+  delete updatecopy.company;
   try {
-    const communication = await Communication.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-      }
-    );
-    if (!communication) {
-      return res.status(404).json({ message: "Company not found" });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid communication ID" });
     }
-    res.json(communication);
+
+    const communication = await Communication.findByIdAndUpdate(
+      id.toString(),
+      { $set: updatecopy },
+      { new: true, runValidators: true }
+    );
+
+    if (!communication) {
+      return res.status(404).json({ message: "Communication not found" });
+    }
+
+    return res.status(201).json(communication);
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error updating communication:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -69,13 +78,12 @@ router.delete("/", auth, async (req, res) => {
     const communication = await Communication.findOneAndDelete({
       emails: email,
     });
-    console.log(communication);
     if (!communication) {
       return res.status(404).json({ message: "Company not found" });
     }
     res.json({ message: "Company deleted" });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
