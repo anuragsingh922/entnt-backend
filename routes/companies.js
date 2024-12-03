@@ -20,6 +20,7 @@ router.post("/", auth, async (req, res) => {
     await company.save();
     res.status(201).json(company);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -44,7 +45,7 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // Delete company
-router.delete("/:email", auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
     const company = await Company.findByIdAndDelete(id);

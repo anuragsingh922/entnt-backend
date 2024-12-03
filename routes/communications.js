@@ -72,12 +72,10 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // Delete Communication
-router.delete("/", auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
-    const { email } = req.params;
-    const communication = await Communication.findOneAndDelete({
-      emails: email,
-    });
+    const { id } = req.params;
+    const communication = await Communication.findByIdAndDelete(id);
     if (!communication) {
       return res.status(404).json({ message: "Company not found" });
     }
