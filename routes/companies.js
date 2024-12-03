@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Company = require("../models/Company");
 const auth = require("../middleware/auth");
+const Communication = require("../models/Communication");
 
 // Get all companies
 router.get("/", auth, async (req, res) => {
@@ -52,6 +53,7 @@ router.delete("/:id", auth, async (req, res) => {
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
     }
+    await Communication.deleteMany({ company: id });
     res.json({ message: "Company deleted" });
   } catch (err) {
     console.error(err);
